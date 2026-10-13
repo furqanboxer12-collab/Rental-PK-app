@@ -1,0 +1,36 @@
+code
+Tsx
+import React from 'react';
+import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+
+export const ScamAlertChatBanner = () => (
+  <View style={styles.banner}>
+    <Text style={styles.bannerTitle}>⚠️ Anti-Scam Security Notice</Text>
+    <Text style={styles.bannerText}>
+      Always inspect the property or vehicle in person. Never transfer advance token or deposit
+      via JazzCash / EasyPaisa to unverified accounts.
+    </Text>
+  </View>
+);
+
+export const CallOwnerButton = ({ phone, hidePhone, chatOnly }: { phone: string; hidePhone: boolean; chatOnly: boolean }) => {
+  if (hidePhone || chatOnly) return null;
+
+  const handleDial = () => {
+    Linking.openURL(`tel:${phone}`);
+  };
+
+  return (
+    <TouchableOpacity style={styles.callButton} onPress={handleDial}>
+      <Text style={styles.callText}>Call Owner (+92)</Text>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  banner: { backgroundColor: '#FFFBEB', borderColor: '#F59E0B', borderWidth: 1, padding: 12, borderRadius: 8, margin: 10 },
+  bannerTitle: { color: '#B45309', fontWeight: 'bold', fontSize: 13, marginBottom: 4 },
+  bannerText: { color: '#374151', fontSize: 12, lineHeight: 16 },
+  callButton: { backgroundColor: '#0A5C36', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, alignItems: 'center' },
+  callText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
+});
