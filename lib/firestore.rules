@@ -1,0 +1,80 @@
+-- 1. Users Table
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE,
+    phone VARCHAR(20) UNIQUE NOT NULL, -- e.g., +9234______
+    cnic_number VARCHAR(15) UNIQUE,     -- e.g., 40000-0000000-0
+    verification_status VARCHAR(20) DEFAULT 'UNVERIFIED' 
+        CHECK (verification_status IN ('UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED')),
+    trust_score NUMERIC(3,2) DEFAULT 5.00,
+    reviews_count INT DEFAULT 0,
+    hide_phone BOOLEAN DEFAULT FALSE,
+    chat_only_mode BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. CNIC Verifications Table
+CREATE TABLE cnic_verifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    cnic_front_url TEXT NOT NULL,
+    cnic_back_url TEXT NOT NULL,
+    extracted_cnic VARCHAR(15),
+    nadra_match_score NUMERIC(3,2),
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) DEFAULT 'PENDING'
+);
+
+-- 3. Listings Table (Houses, Cars, Bikes)
+CREATE TABLE listings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category VARCHAR(20) NOT NULL CHECK (category IN ('HOUSE', 'CAR', 'BIKE')),
+    title VARCHAR(150) NOT NULL,
+    description TEXT NOT NULL,
+    price_daily BIGINT NOT NULL,   -- In PKR
+    price_weekly BIGINT,           -- In PKR
+    price_monthly BIGINT,          -- In PKR
+    city VARCHAR(50) NOT NULL,     -- e.g., Islamabad, Lahore, Karachi
+    area VARCHAR(100) NOT NULL,    -- e.g., DHA Phase 6, Gulberg III
+    latitude NUMERIC(10, 7),
+    longitude NUMERIC(10, 7),
+    condition_status VARCHAR(50) NOT NULL,
+    amenities JSONB DEFAULT '[]'::jsonb,
+    terms_and_conditions TEXT NOT NULL,
+    photos JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of URLs (up to 10)
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4. Reviews & Ratings Table
+CREATE TABLE reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+    reviewer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT NOT NULL,
+    is_verified_rental BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 5. Chats & Messages
+CREATE TABLE chat_threads (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+    renter_id UUID NOT NULL REFERENCES users(id),
+    owner_id UUID NOT NULL REFERENCES users(id),
+    last_message TEXT,
+    last_message_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(listing_id, renter_id, owner_id)
+);
+
+CREATE TABLE messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    thread_id UUID NOT NULL REFERENCES chat_threads(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES users(id),
+    message_text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
