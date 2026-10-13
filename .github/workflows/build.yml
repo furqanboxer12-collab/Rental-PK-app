@@ -1,34 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet, Linking, TouchableOpacity } from 'react-native';
+name: Build Android APK
 
-export const ScamAlertChatBanner = () => (
-  <View style={styles.banner}>
-    <Text style={styles.bannerTitle}>⚠️ Anti-Scam Security Notice</Text>
-    <Text style={styles.bannerText}>
-      Always inspect the property or vehicle in person. Never transfer advance token or deposit
-      via JazzCash / EasyPaisa to unverified accounts.
-    </Text>
-  </View>
-);
+on:
+  push:
+    branches: [ "main" ]
 
-export const CallOwnerButton = ({ phone, hidePhone, chatOnly }: { phone: string; hidePhone: boolean; chatOnly: boolean }) => {
-  if (hidePhone || chatOnly) return null;
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-  const handleDial = () => {
-    Linking.openURL(`tel:${phone}`);
-  };
+    steps:
+    - uses: actions/checkout@v3
 
-  return (
-    <TouchableOpacity style={styles.callButton} onPress={handleDial}>
-      <Text style={styles.callText}>Call Owner (+92)</Text>
-    </TouchableOpacity>
-  );
-};
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '17'
 
-const styles = StyleSheet.create({
-  banner: { backgroundColor: '#FFFBEB', borderColor: '#F59E0B', borderWidth: 1, padding: 12, borderRadius: 8, margin: 10 },
-  bannerTitle: { color: '#B45309', fontWeight: 'bold', fontSize: 13, marginBottom: 4 },
-  bannerText: { color: '#374151', fontSize: 12, lineHeight: 16 },
-  callButton: { backgroundColor: '#0A5C36', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, alignItems: 'center' },
-  callText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
-});
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.x'
+
+    - name: Install Dependencies
+      run: flutter pub get
+
+    - name: Build APK
+      run: flutter build apk --release
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release
+        path: build/app/outputs/flutter-apk/app-release.apk
